@@ -1,0 +1,485 @@
+/* ====================================================
+   Fretboard 14 - Modern Guitar Style Sheet
+   Fender / Stratocaster Style with Full 14 Frets
+   ==================================================== */
+
+:root {
+  --bg-color: #121316;
+  --header-bg: #1c1e24;
+  --card-bg: rgba(28, 30, 36, 0.85);
+  --text-main: #f0f2f5;
+  --text-sub: #9ba1b0;
+  --accent-color: #2ed573;
+  --accent-glow: rgba(46, 213, 115, 0.6);
+  --fret-wire-color: linear-gradient(to right, #71757d 0%, #ffffff 30%, #a4abb5 70%, #4b4f56 100%);
+  --nut-color: #e5ded3;
+  --inlay-color: radial-gradient(circle, #f5f4ef 0%, #d8d4c9 70%, #999488 100%);
+}
+
+/* メイプル指板テーマ */
+body.theme-maple {
+  --wood-bg: linear-gradient(180deg, #d8a05c 0%, #c48b48 30%, #e2ab69 50%, #b87c38 85%, #9e6425 100%);
+  --wood-grain: repeating-linear-gradient(90deg, rgba(160, 95, 25, 0.08) 0px, rgba(160, 95, 25, 0.08) 2px, transparent 2px, transparent 8px);
+  --fret-num-color: #6d4615;
+}
+
+/* ローズウッド指板テーマ */
+body.theme-rosewood {
+  --wood-bg: linear-gradient(180deg, #3d2314 0%, #2b180d 30%, #4a2d1b 50%, #26150b 85%, #1f0f07 100%);
+  --wood-grain: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.25) 0px, rgba(0, 0, 0, 0.25) 2px, transparent 2px, transparent 9px);
+  --fret-num-color: #a49182;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Outfit', 'Noto Sans JP', sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ====================================================
+   Header & Controls
+   ==================================================== */
+.app-header {
+  height: 52px;
+  background: var(--header-bg);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 20;
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.logo-text strong {
+  color: var(--accent-color);
+}
+
+.badge-fret {
+  background: rgba(46, 213, 115, 0.12);
+  color: var(--accent-color);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(46, 213, 115, 0.3);
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.control-label {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+}
+
+.select-ui {
+  background: #2a2d36;
+  color: var(--text-main);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.select-ui:focus {
+  border-color: var(--accent-color);
+}
+
+.volume-group {
+  gap: 4px;
+}
+
+.vol-icon {
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.vol-slider {
+  width: 70px;
+  height: 4px;
+  accent-color: var(--accent-color);
+  cursor: pointer;
+}
+
+.btn-icon {
+  background: #2a2d36;
+  color: var(--text-main);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background: #363a45;
+  border-color: var(--accent-color);
+}
+
+/* ====================================================
+   Main Guitar Fretboard Area
+   ==================================================== */
+.app-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at center, #1c1e24 0%, #0b0c0f 100%);
+}
+
+.guitar-neck-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.fretboard {
+  position: relative;
+  width: 100%;
+  height: calc(100% - 10px);
+  max-height: 520px;
+  background: var(--wood-grain), var(--wood-bg);
+  border-radius: 6px;
+  box-shadow: 
+    0 12px 36px rgba(0, 0, 0, 0.85),
+    inset 0 4px 14px rgba(255, 255, 255, 0.2),
+    inset 0 -4px 14px rgba(0, 0, 0, 0.65);
+  display: flex;
+  overflow: hidden;
+  border-top: 3px solid rgba(255, 255, 255, 0.25);
+  border-bottom: 5px solid rgba(0, 0, 0, 0.7);
+}
+
+/* 各フレット列 (0〜14) */
+.fret-column {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  z-index: 2;
+}
+
+/* ナット（0フレット / 開放弦エリア） */
+.fret-column[data-fret="0"] {
+  flex: 0 0 52px;
+  background: linear-gradient(to right, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.1) 70%, var(--nut-color) 85%, #baa996 100%);
+  border-right: 4px solid #6b5c4d;
+  box-shadow: 2px 0 6px rgba(0,0,0,0.6);
+}
+
+/* 1〜14フレットの幅配分（高フレットほど徐々に狭くなる） */
+.fret-column[data-fret="1"]  { flex: 1.35; }
+.fret-column[data-fret="2"]  { flex: 1.28; }
+.fret-column[data-fret="3"]  { flex: 1.22; }
+.fret-column[data-fret="4"]  { flex: 1.16; }
+.fret-column[data-fret="5"]  { flex: 1.10; }
+.fret-column[data-fret="6"]  { flex: 1.05; }
+.fret-column[data-fret="7"]  { flex: 1.00; }
+.fret-column[data-fret="8"]  { flex: 0.95; }
+.fret-column[data-fret="9"]  { flex: 0.91; }
+.fret-column[data-fret="10"] { flex: 0.87; }
+.fret-column[data-fret="11"] { flex: 0.84; }
+.fret-column[data-fret="12"] { flex: 0.81; }
+.fret-column[data-fret="13"] { flex: 0.78; }
+.fret-column[data-fret="14"] { flex: 0.75; }
+
+/* フレットワイヤー（金属バー） */
+.fret-column:not([data-fret="0"])::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 3.5px;
+  background: var(--fret-wire-color);
+  box-shadow: 
+    1.5px 0 3px rgba(0, 0, 0, 0.7),
+    -1px 0 2px rgba(255, 255, 255, 0.4);
+  z-index: 5;
+}
+
+/* フレット番号表示（指板の下端） */
+.fret-number {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--fret-num-color);
+  opacity: 0.85;
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* ポジションマーク（ドットインレイ） */
+.inlay-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--inlay-color);
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.7), 0 1px 3px rgba(0,0,0,0.5);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 12フレットのダブルドット */
+.inlay-dot.double-top {
+  top: 25%;
+}
+.inlay-dot.double-bottom {
+  top: 75%;
+}
+
+/* 弦とフレットの交点セル（タップターゲット） */
+.fret-cell {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+}
+
+/* 弦の描画（各セルの中央を横断） */
+.string-wire {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* 弦の太さとリアルな質感（1弦=最上部, 6弦=最下部） */
+/* 1弦 (E4: 0.009 inch) */
+[data-string="1"] .string-wire {
+  height: 1.6px;
+  background: linear-gradient(180deg, #ffffff 0%, #c9ced6 50%, #7d8491 100%);
+  box-shadow: 0 1.5px 3px rgba(0, 0, 0, 0.8);
+}
+/* 2弦 (B3: 0.011 inch) */
+[data-string="2"] .string-wire {
+  height: 2.0px;
+  background: linear-gradient(180deg, #ffffff 0%, #c9ced6 50%, #7d8491 100%);
+  box-shadow: 0 1.8px 3px rgba(0, 0, 0, 0.8);
+}
+/* 3弦 (G3: 0.016 inch) */
+[data-string="3"] .string-wire {
+  height: 2.6px;
+  background: linear-gradient(180deg, #ffffff 0%, #b8bec9 50%, #6c7380 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+/* 4弦 (D3: 巻弦 0.024 inch) */
+[data-string="4"] .string-wire {
+  height: 3.4px;
+  background: repeating-linear-gradient(90deg, #bcc3cc 0px, #8d95a1 1.5px, #d8dfe8 3px);
+  box-shadow: 0 2.5px 5px rgba(0, 0, 0, 0.85);
+}
+/* 5弦 (A2: 巻弦 0.032 inch) */
+[data-string="5"] .string-wire {
+  height: 4.2px;
+  background: repeating-linear-gradient(90deg, #bcc3cc 0px, #8d95a1 2px, #d8dfe8 4px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.9);
+}
+/* 6弦 (E2: 巻弦 0.042 inch) */
+[data-string="6"] .string-wire {
+  height: 5.2px;
+  background: repeating-linear-gradient(90deg, #b0b8c2 0px, #7e8794 2.5px, #ced6df 5px);
+  box-shadow: 0 3.5px 7px rgba(0, 0, 0, 0.95);
+}
+
+/* 押弦時の「●」マーカー */
+.fret-cell .press-marker {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #55efc4 10%, #00b894 100%);
+  box-shadow: 
+    0 0 14px rgba(46, 213, 115, 0.9),
+    0 0 28px rgba(46, 213, 115, 0.5),
+    inset 0 2px 4px rgba(255, 255, 255, 0.9);
+  border: 2px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  transform: scale(0);
+  opacity: 0;
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.35s ease;
+  z-index: 15;
+}
+
+/* 音名ラベル */
+.note-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #043818;
+  line-height: 1;
+}
+
+/* アクティブ状態のマーカー表示 */
+.fret-cell.active .press-marker {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* 弦の振動アニメーション */
+.fret-cell.vibrating .string-wire {
+  animation: stringVibrate 0.25s linear infinite;
+}
+
+@keyframes stringVibrate {
+  0% { transform: translateY(-50%) translateY(0px); }
+  25% { transform: translateY(-50%) translateY(-2px); }
+  50% { transform: translateY(-50%) translateY(2px); }
+  75% { transform: translateY(-50%) translateY(-1px); }
+  100% { transform: translateY(-50%) translateY(0px); }
+}
+
+/* ====================================================
+   Footer
+   ==================================================== */
+.app-footer {
+  height: 38px;
+  background: var(--header-bg);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  z-index: 20;
+  flex-shrink: 0;
+}
+
+.last-played-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.current-note {
+  font-weight: 700;
+  color: var(--accent-color);
+  font-size: 0.95rem;
+  min-width: 40px;
+}
+
+/* ====================================================
+   Orientation Warning (Landscape Recommendation)
+   ==================================================== */
+.portrait-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 11, 14, 0.96);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.overlay-card {
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.rotate-phone-animation {
+  font-size: 3.5rem;
+  animation: rotateGuide 2s ease-in-out infinite;
+}
+
+@keyframes rotateGuide {
+  0%, 10% { transform: rotate(0deg); }
+  40%, 60% { transform: rotate(90deg); }
+  90%, 100% { transform: rotate(0deg); }
+}
+
+.overlay-card h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.overlay-card p {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  line-height: 1.5;
+}
+
+/* モバイルの縦向き画面時にオーバーレイを表示 */
+@media screen and (orientation: portrait) and (max-width: 768px) {
+  .portrait-overlay {
+    display: flex;
+  }
+}

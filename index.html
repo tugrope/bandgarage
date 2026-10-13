@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Fretboard 14 - 14フレット ギター指板アプリ</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="theme-maple">
+
+  <!-- アプリヘッダー／コントロールバー -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo">
+        <span class="logo-icon">🎸</span>
+        <span class="logo-text">Fretboard <strong>14</strong></span>
+      </div>
+      <div class="badge-fret">0 〜 14 Fret Full Size</div>
+    </div>
+
+    <div class="header-controls">
+      <!-- 指板木目テーマ切り替え -->
+      <div class="control-group">
+        <label for="fretboardTheme" class="control-label">指板材</label>
+        <select id="fretboardTheme" class="select-ui">
+          <option value="theme-maple" selected>メイプル (Maple)</option>
+          <option value="theme-rosewood">ローズウッド (Rosewood)</option>
+        </select>
+      </div>
+
+      <!-- 音名ラベル切り替え -->
+      <div class="control-group">
+        <label for="noteDisplay" class="control-label">音名表示</label>
+        <select id="noteDisplay" class="select-ui">
+          <option value="english" selected>音名 (C, D, E...)</option>
+          <option value="solfege">階名 (ド, レ, ミ...)</option>
+          <option value="none">非表示</option>
+        </select>
+      </div>
+
+      <!-- ボリュームスライダー -->
+      <div class="control-group volume-group">
+        <span class="vol-icon" id="volIcon">🔊</span>
+        <input type="range" id="masterVolume" min="0" max="1" step="0.05" value="0.8" class="vol-slider" title="音量">
+      </div>
+
+      <!-- 全画面ボタン -->
+      <button id="fullscreenBtn" class="btn-icon" title="全画面表示">⛶</button>
+    </div>
+  </header>
+
+  <!-- 指板メインコンテナ -->
+  <main class="app-main">
+    <div class="guitar-neck-wrapper" id="neckWrapper">
+      <!-- ギター指板本体 -->
+      <div class="fretboard" id="fretboard">
+        <!-- JSでフレット(0〜14)と各交点セルを動的生成 -->
+      </div>
+    </div>
+  </main>
+
+  <!-- フッター／情報バー -->
+  <footer class="app-footer">
+    <div class="last-played-info">
+      <span>演奏中の音:</span>
+      <span id="currentNoteText" class="current-note">-</span>
+    </div>
+    <div class="instructions">
+      <span>💡 タップ／クリックで発音（和音・複数指・スライド演奏対応）</span>
+    </div>
+  </footer>
+
+  <!-- 縦画面時の回転案内オーバーレイ（スマホ向け） -->
+  <div class="portrait-overlay" id="portraitOverlay">
+    <div class="overlay-card">
+      <div class="rotate-phone-animation">📱↻</div>
+      <h2>画面を横向きにしてください</h2>
+      <p>14フレット全体をフルサイズで演奏するため、端末を横向き（Landscape）にしてお楽しみください。</p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
