@@ -39,6 +39,8 @@ body.theme-rosewood {
 html, body {
   width: 100%;
   height: 100%;
+  height: 100dvh;
+  height: 100svh;
   overflow: hidden;
   font-family: 'Outfit', 'Noto Sans JP', sans-serif;
   background-color: var(--bg-color);
@@ -46,31 +48,49 @@ html, body {
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 
 /* ====================================================
    アプリ全体コンテナ（横画面FIX対応）
    縦向き持ちでも90度自動回転させて横向きギターをキープ
+   ブラウザのデフォルト領域（URLバー・ツールバー）考慮
    ==================================================== */
 .app-container {
   width: 100vw;
+  width: 100dvw;
   height: 100vh;
+  height: 100dvh;
+  height: 100svh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  box-sizing: border-box;
 }
 
-/* 端末が縦向き（Portrait）の場合、90度回転させて横向き固定 */
+/* 端末が縦向き（Portrait）の場合、90度回転させて横向き固定
+   ブラウザのアドレスバー（上部）とツールバー（下部）の間の可視領域に完全に収める */
 @media screen and (orientation: portrait) {
   .app-container {
     position: fixed;
     top: 50%;
     left: 50%;
     width: 100vh;
+    width: 100dvh;
+    width: 100svh;
     height: 100vw;
+    height: 100dvw;
     transform: translate(-50%, -50%) rotate(90deg);
     transform-origin: center center;
+    /* 回転後の画面上下（アドレスバー側＝左、ツールバー側＝右）に安全余白を確保 */
+    padding-top: env(safe-area-inset-right);
+    padding-right: max(env(safe-area-inset-bottom), 8px);
+    padding-bottom: env(safe-area-inset-left);
+    padding-left: max(env(safe-area-inset-top), 8px);
+    box-sizing: border-box;
   }
 }
 
@@ -125,7 +145,7 @@ html, body {
 
 /* ナット（0フレット / 開放弦エリア） */
 .fret-column[data-fret="0"] {
-  flex: 0 0 52px;
+  flex: 0 0 clamp(42px, 6.5vh, 52px);
   background: linear-gradient(to right, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.1) 70%, var(--nut-color) 85%, #baa996 100%);
   border-right: 4px solid #6b5c4d;
   box-shadow: 2px 0 6px rgba(0,0,0,0.6);
