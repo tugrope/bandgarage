@@ -28,9 +28,10 @@ class GuitarApp {
   constructor() {
     this.audioCtx = null;
     this.masterGain = null;
+    this.compressor = null;
     this.activePointers = new Map(); // pointerId -> activeCell
     this.noteDisplayMode = 'english'; // 'english' | 'solfege' | 'none'
-    this.volume = 0.8;
+    this.volume = 1.4; // 初期値（従来の約1.75倍、最大2.0倍）
 
     this.initDOM();
     this.buildFretboard();
@@ -39,6 +40,7 @@ class GuitarApp {
 
   // DOM要素の参照
   initDOM() {
+    this.appContainer = document.getElementById('appContainer');
     this.fretboardEl = document.getElementById('fretboard');
     this.themeSelect = document.getElementById('fretboardTheme');
     this.noteDisplaySelect = document.getElementById('noteDisplay');
@@ -46,16 +48,29 @@ class GuitarApp {
     this.volIcon = document.getElementById('volIcon');
     this.fullscreenBtn = document.getElementById('fullscreenBtn');
     this.currentNoteText = document.getElementById('currentNoteText');
+    this.iosFullscreenHint = document.getElementById('iosFullscreenHint');
   }
 
-  // Web Audio Contextの初期化（iOS/Safariアンロック対応）
+  // Web Audio Contextの初期化（コンプレッサー＆マスターゲイン構成）
   initAudio() {
     if (!this.audioCtx) {
       const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
       this.audioCtx = new AudioCtxClass();
-      
+
+      // 1. マスターコンプレッサー／リミッター（大音量時の音割れ防止と太い音圧を両立）
+      this.compressor = this.audioCtx.createDynamicsCompressor();
+      this.compressor.threshold.setValueAtTime(-14, this.audioCtx.currentTime);
+      this.compressor.knee.setValueAtTime(8, this.audioCtx.currentTime);
+      this.compressor.ratio.setValueAtTime(5, this.audioCtx.currentTime);
+      this.compressor.attack.setValueAtTime(0.002, this.audioCtx.currentTime);
+      this.compressor.release.setValueAtTime(0.12, this.audioCtx.currentTime);
+
+      // 2. マスターゲイン（最大2.0倍対応）
       this.masterGain = this.audioCtx.createGain();
       this.masterGain.gain.setValueAtTime(this.volume, this.audioCtx.currentTime);
+
+      // 接続: ノード群 -> compressor -> masterGain -> destination
+      this.compressor.connect(this.masterGain);
       this.masterGain.connect(this.audioCtx.destination);
     }
 
@@ -82,8 +97,9 @@ class GuitarApp {
   }
 
   /**
-   * Karplus-Strong 撥弦物理合成による高品位ギターサウンド生成
-   * 外部ファイル不要で即時発音・低遅延
+   * 改良型 Karplus-Strong 撥弦物理合成
+   * - 1・2弦高フレットの「ペシペシ」感を解消（基音ブレンド＋周波数適応型ダンピング）
+   * - エレキギターらしい太さと芯のある伸びやかなロングトーン
    */
   playGuitarPluck(midi, stringIndex) {
     this.initAudio();
@@ -91,29 +107,37 @@ class GuitarApp {
     const freq = this.midiToFreq(midi);
     const sampleRate = this.audioCtx.sampleRate;
     const N = Math.max(2, Math.round(sampleRate / freq));
-    
-    // サステイン長（低音弦は長め、高音弦はやや短め）
-    const duration = 2.2 + (7 - stringIndex) * 0.2;
+
+    // サステイン長（高音域も短く切れることなく、伸びやかに保持）
+    const duration = Math.max(2.4, 2.2 + (7 - stringIndex) * 0.18);
     const totalSamples = Math.floor(sampleRate * duration);
-    
+
     const buffer = this.audioCtx.createBuffer(1, totalSamples, sampleRate);
     const channelData = buffer.getChannelData(0);
 
-    // 1. ピックによる励起ノイズテーブル（初期状態）
+    // 1. ピック励起テーブル（高音域のペシペシ感を解消するため、基音サイン波をブレンド）
     const table = new Float32Array(N);
+    // 高周波になるほどサイン波のブレンド比率を高めて「音の芯」を確保
+    const sineRatio = Math.min(0.55, 0.22 + (freq / 1200) * 0.35);
+
     for (let i = 0; i < N; i++) {
-      // わずかに丸みを帯びたノイズでアタック感を自然に
-      table[i] = (Math.random() * 2 - 1) * 0.95;
+      const noise = (Math.random() * 2 - 1) * 0.9;
+      const sine = Math.sin((2 * Math.PI * i) / N);
+      table[i] = (1 - sineRatio) * noise + sineRatio * sine;
     }
 
-    // 2. 減衰係数（弦の太さに応じて調整）
-    const damping = 0.991 + (7 - stringIndex) * 0.0012;
+    // 2. 周波数適応型ダンピング（高周波でも急激にエネルギーが失われないよう調整）
+    // ループ頻度が高くなる高音域ほど1周期あたりの減衰を緩やかにしてサステインを維持
+    const damping = Math.pow(0.9972, 220 / freq);
+    // 低域通過フィルタのブレンド率（高音ほど平均化をゆるやかにして抜けを保つ）
+    const blend = Math.max(0.28, Math.min(0.5, 0.5 * Math.sqrt(300 / freq)));
 
-    // 3. Karplus-Strong ループ（低域通過平均化）
+    // 3. Karplus-Strong ループ
     let previousSample = 0;
     for (let i = 0; i < totalSamples; i++) {
       const idx = i % N;
-      const filtered = 0.5 * (table[idx] + previousSample) * damping;
+      const current = table[idx];
+      const filtered = ((1 - blend) * current + blend * previousSample) * damping;
       table[idx] = filtered;
       previousSample = filtered;
       channelData[i] = filtered;
@@ -123,22 +147,39 @@ class GuitarApp {
     const source = this.audioCtx.createBufferSource();
     source.buffer = buffer;
 
-    // ギターのボディ共鳴をシミュレートするフィルター
-    const bodyFilter = this.audioCtx.createBiquadFilter();
-    bodyFilter.type = 'lowpass';
-    bodyFilter.frequency.setValueAtTime(Math.min(5000, freq * 8), this.audioCtx.currentTime);
+    // (A) エレキギターのピックアップ特性（中低域の太さを強化するピーキングEQ）
+    const bodyEQ = this.audioCtx.createBiquadFilter();
+    bodyEQ.type = 'peaking';
+    bodyEQ.frequency.setValueAtTime(380, this.audioCtx.currentTime); // 380Hz付近の温かみと太さ
+    bodyEQ.gain.setValueAtTime(3.5, this.audioCtx.currentTime);
+    bodyEQ.Q.setValueAtTime(1.0, this.audioCtx.currentTime);
 
-    // 弦ごとの音量バランス
+    // (B) アタックの抜けを演出するハイミッドEQ
+    const presenceEQ = this.audioCtx.createBiquadFilter();
+    presenceEQ.type = 'peaking';
+    presenceEQ.frequency.setValueAtTime(2600, this.audioCtx.currentTime); // 2.6kHzのエレキらしいヌケ
+    presenceEQ.gain.setValueAtTime(2.5, this.audioCtx.currentTime);
+    presenceEQ.Q.setValueAtTime(1.2, this.audioCtx.currentTime);
+
+    // (C) 耳障りな超高域ノイズカット用ローパス
+    const lowpass = this.audioCtx.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.setValueAtTime(Math.min(7500, freq * 7), this.audioCtx.currentTime);
+
+    // (D) 弦ごとの音量バランス補正（1・2弦の音量を底上げ）
     const noteGain = this.audioCtx.createGain();
-    const stringVolumeAdjust = 0.8 + (stringIndex - 1) * 0.05;
+    const stringVolumeAdjust = 1.05 + (stringIndex <= 2 ? 0.2 : 0) + (stringIndex - 1) * 0.04;
     noteGain.gain.setValueAtTime(stringVolumeAdjust, this.audioCtx.currentTime);
 
-    // フェードアウトエンベロープ（プチノイズ防止）
-    noteGain.gain.setTargetAtTime(0, this.audioCtx.currentTime + duration - 0.2, 0.08);
+    // フェードアウトエンベロープ
+    noteGain.gain.setTargetAtTime(0, this.audioCtx.currentTime + duration - 0.25, 0.08);
 
-    source.connect(bodyFilter);
-    bodyFilter.connect(noteGain);
-    noteGain.connect(this.masterGain);
+    // ノード接続: source -> bodyEQ -> presenceEQ -> lowpass -> noteGain -> compressor
+    source.connect(bodyEQ);
+    bodyEQ.connect(presenceEQ);
+    presenceEQ.connect(lowpass);
+    lowpass.connect(noteGain);
+    noteGain.connect(this.compressor);
 
     source.start();
     source.stop(this.audioCtx.currentTime + duration);
@@ -156,129 +197,160 @@ class GuitarApp {
       // ドットインレイの追加
       if (SINGLE_INLAY_FRETS.includes(fret)) {
         const dot = document.createElement('div');
-        dot.className = 'inlay-dot';
+        dot.className = 'inlay-dot inlay-single';
         col.appendChild(dot);
       } else if (DOUBLE_INLAY_FRETS.includes(fret)) {
-        const dotTop = document.createElement('div');
-        dotTop.className = 'inlay-dot double-top';
-        const dotBottom = document.createElement('div');
-        dotBottom.className = 'inlay-dot double-bottom';
-        col.appendChild(dotTop);
-        col.appendChild(dotBottom);
+        const dot1 = document.createElement('div');
+        dot1.className = 'inlay-dot inlay-double-top';
+        const dot2 = document.createElement('div');
+        dot2.className = 'inlay-dot inlay-double-bottom';
+        col.appendChild(dot1);
+        col.appendChild(dot2);
       }
 
-      // フレット番号表示（0フレットは「Open」）
+      // フレット番号ラベル
       const numLabel = document.createElement('div');
       numLabel.className = 'fret-number';
       numLabel.textContent = fret === 0 ? '0' : fret;
       col.appendChild(numLabel);
 
-      // 各弦の交点セル（1弦〜6弦）
-      STRINGS_CONFIG.forEach(str => {
-        const midi = str.baseMidi + fret;
-        const noteInfo = this.getNoteInfo(midi);
-
+      // 各弦（1〜6弦）のセル
+      STRINGS_CONFIG.forEach((str) => {
         const cell = document.createElement('div');
         cell.className = 'fret-cell';
         cell.dataset.fret = fret;
         cell.dataset.string = str.stringIndex;
+
+        // MIDIノート番号計算
+        const midi = str.baseMidi + fret;
         cell.dataset.midi = midi;
-        cell.dataset.noteEn = noteInfo.enShort;
-        cell.dataset.noteEnFull = noteInfo.en;
-        cell.dataset.noteJa = noteInfo.ja;
 
-        // 弦要素
-        const stringWire = document.createElement('div');
-        stringWire.className = 'string-wire';
-        cell.appendChild(stringWire);
+        // 弦ワイヤー
+        const wire = document.createElement('div');
+        wire.className = `string-wire string-wire-${str.stringIndex}`;
+        cell.appendChild(wire);
 
-        // 押弦「●」マーカー
+        // 押弦ハイライトマーカー
         const marker = document.createElement('div');
         marker.className = 'press-marker';
-
-        const label = document.createElement('span');
-        label.className = 'note-label';
-        label.textContent = this.getLabelText(noteInfo);
-        marker.appendChild(label);
-
         cell.appendChild(marker);
+
+        // 音名バッジ
+        const badge = document.createElement('div');
+        badge.className = 'note-badge';
+        cell.appendChild(badge);
+
         col.appendChild(cell);
       });
 
       this.fretboardEl.appendChild(col);
     }
+
+    this.updateNoteLabels();
   }
 
-  // 表示モードに応じたラベルテキスト生成
-  getLabelText(noteInfo) {
-    if (this.noteDisplayMode === 'english') {
-      return noteInfo.enShort;
-    } else if (this.noteDisplayMode === 'solfege') {
-      return noteInfo.ja;
-    }
-    return '';
-  }
-
-  // 音名表示モードの更新
+  // 音名バッジの表示更新（音名 / 階名 / なし）
   updateNoteLabels() {
     const cells = this.fretboardEl.querySelectorAll('.fret-cell');
-    cells.forEach(cell => {
-      const label = cell.querySelector('.note-label');
-      if (label) {
-        if (this.noteDisplayMode === 'english') {
-          label.textContent = cell.dataset.noteEn;
-        } else if (this.noteDisplayMode === 'solfege') {
-          label.textContent = cell.dataset.noteJa;
-        } else {
-          label.textContent = '';
-        }
+    cells.forEach((cell) => {
+      const midi = parseInt(cell.dataset.midi, 10);
+      const noteInfo = this.getNoteInfo(midi);
+      const badge = cell.querySelector('.note-badge');
+
+      if (!badge) return;
+
+      if (this.noteDisplayMode === 'none') {
+        badge.style.display = 'none';
+      } else if (this.noteDisplayMode === 'solfege') {
+        badge.style.display = 'flex';
+        badge.textContent = noteInfo.ja;
+      } else {
+        badge.style.display = 'flex';
+        badge.textContent = noteInfo.enShort;
       }
     });
   }
 
-  // セルの押弦発音処理
+  // セルの押弦・発音処理
   activateCell(cell) {
-    if (!cell || !cell.classList.contains('fret-cell')) return;
+    if (!cell) return;
+
+    cell.classList.add('active', 'vibrating');
 
     const midi = parseInt(cell.dataset.midi, 10);
     const stringIndex = parseInt(cell.dataset.string, 10);
     const fret = parseInt(cell.dataset.fret, 10);
 
-    // サウンド再生
+    // 発音
     this.playGuitarPluck(midi, stringIndex);
 
-    // 「●」マーカーと振動アニメーション
-    cell.classList.add('active', 'vibrating');
+    // 音名表示の更新（緑文字でスッキリ表示）
+    const noteInfo = this.getNoteInfo(midi);
+    const noteFull = noteInfo.en;
+    const noteJa = noteInfo.ja;
 
-    // フッター情報更新
-    const noteFull = cell.dataset.noteEnFull;
-    const noteJa = cell.dataset.noteJa;
-    this.currentNoteText.textContent = `${stringIndex}弦 ${fret === 0 ? '開放' : fret + 'F'}: ${noteFull} (${noteJa})`;
+    const marker = cell.querySelector('.press-marker');
+    if (marker) {
+      marker.setAttribute('data-active-note', noteInfo.enShort);
+    }
 
-    // タップ後、少し余韻を残してマーカーをフェードアウト
-    clearTimeout(cell._timer);
-    cell._timer = setTimeout(() => {
-      cell.classList.remove('vibrating');
-      if (![...this.activePointers.values()].includes(cell)) {
-        cell.classList.remove('active');
-      }
-    }, 450);
+    if (this.currentNoteText) {
+      this.currentNoteText.textContent = `${stringIndex}弦 ${fret === 0 ? '開放' : fret + 'F'} : ${noteFull} (${noteJa})`;
+    }
   }
 
-  // セルの解除
+  // セルの離弦処理
   deactivateCell(cell) {
     if (!cell) return;
-    cell.classList.remove('vibrating');
+    cell.classList.remove('active');
     setTimeout(() => {
-      if (![...this.activePointers.values()].includes(cell)) {
-        cell.classList.remove('active');
-      }
-    }, 300);
+      cell.classList.remove('vibrating');
+    }, 400);
   }
 
-  // Pointerイベント（マウス／マルチタッチ両対応）
+  // フルスクリーン切り替え（クロスブラウザ対応 ＆ iOS Safari案内）
+  toggleFullscreen() {
+    const doc = document.documentElement;
+    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+
+    if (!isFullscreen) {
+      if (doc.requestFullscreen) {
+        doc.requestFullscreen().catch(() => this.showIosFullscreenHint());
+      } else if (doc.webkitRequestFullscreen) {
+        doc.webkitRequestFullscreen();
+      } else if (doc.mozRequestFullScreen) {
+        doc.mozRequestFullScreen();
+      } else if (doc.msRequestFullscreen) {
+        doc.msRequestFullscreen();
+      } else {
+        this.showIosFullscreenHint();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    }
+  }
+
+  // iOS Safari等でFullscreen APIが非対応の場合のヒント表示
+  showIosFullscreenHint() {
+    if (!this.iosFullscreenHint) return;
+    this.iosFullscreenHint.classList.add('show');
+    clearTimeout(this.hintTimer);
+    this.hintTimer = setTimeout(() => {
+      this.iosFullscreenHint.classList.remove('show');
+    }, 3500);
+  }
+
+  // イベントバインド
   bindEvents() {
-    // 指板コンテナでのPointerイベントハンドリング
+    // マルチタッチ・ポインター操作（複数指・和音・スライド演奏対応）
     this.fretboardEl.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       const cell = e.target.closest('.fret-cell');
@@ -292,7 +364,6 @@ class GuitarApp {
       if (!this.activePointers.has(e.pointerId)) return;
       e.preventDefault();
 
-      // 指の下にある要素を取得（スライド／ストローク演奏対応）
       const element = document.elementFromPoint(e.clientX, e.clientY);
       const cell = element ? element.closest('.fret-cell') : null;
       const prevCell = this.activePointers.get(e.pointerId);
@@ -315,33 +386,29 @@ class GuitarApp {
     window.addEventListener('pointerup', handlePointerEnd);
     window.addEventListener('pointercancel', handlePointerEnd);
 
-    // 指板テーマ切り替え
+    // 指板テーマ切り替え（Maple / Rose）
     this.themeSelect.addEventListener('change', (e) => {
       document.body.className = e.target.value;
     });
 
-    // 音名表示切り替え
+    // 音名表示切り替え（音名 / 階名 / なし）
     this.noteDisplaySelect.addEventListener('change', (e) => {
       this.noteDisplayMode = e.target.value;
       this.updateNoteLabels();
     });
 
-    // ボリューム変更
+    // ボリューム変更（最大2.0倍）
     this.volumeSlider.addEventListener('input', (e) => {
       this.volume = parseFloat(e.target.value);
       if (this.masterGain && this.audioCtx) {
         this.masterGain.gain.setValueAtTime(this.volume, this.audioCtx.currentTime);
       }
-      this.volIcon.textContent = this.volume === 0 ? '🔇' : (this.volume < 0.5 ? '🔉' : '🔊');
+      this.volIcon.textContent = this.volume === 0 ? '🔇' : (this.volume < 0.6 ? '🔉' : '🔊');
     });
 
-    // 全画面切り替え
+    // 全画面切り替えボタン
     this.fullscreenBtn.addEventListener('click', () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      } else {
-        document.exitFullscreen().catch(() => {});
-      }
+      this.toggleFullscreen();
     });
   }
 }
