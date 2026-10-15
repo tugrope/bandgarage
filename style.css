@@ -427,7 +427,7 @@ body.theme-maple .note-badge {
 }
 
 .vol-slider {
-  width: 65px;
+  width: 130px;
   height: 4px;
   accent-color: var(--accent-color);
   cursor: pointer;

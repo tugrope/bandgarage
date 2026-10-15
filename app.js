@@ -14,8 +14,8 @@ const STRINGS_CONFIG = [
   { stringIndex: 6, baseMidi: 40, name: '6th (E2)' },
 ];
 
-const NOTE_NAMES_EN = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const NOTE_NAMES_JA = ['ド', 'ド#', 'レ', 'レ#', 'ミ', 'ファ', 'ファ#', 'ソ', 'ソ#', 'ラ', 'ラ#', 'シ'];
+const NOTE_NAMES_EN = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
+const NOTE_NAMES_JA = ['ド', 'レ♭', 'レ', 'ミ♭', 'ミ', 'ファ', 'ソ♭', 'ソ', 'ラ♭', 'ラ', 'シ♭', 'シ'];
 
 // 14フレット（0: 開放弦 〜 14フレット）
 const TOTAL_FRETS = 14;
@@ -31,7 +31,7 @@ class GuitarApp {
     this.compressor = null;
     this.activePointers = new Map(); // pointerId -> activeCell
     this.noteDisplayMode = 'english'; // 'english' | 'solfege' | 'none'
-    this.volume = 1.4; // 初期値（従来の約1.75倍、最大2.0倍）
+    this.volume = 1.4; // 初期値（従来の約1.75倍、最大4.0倍）
 
     this.initDOM();
     this.buildFretboard();
@@ -65,7 +65,7 @@ class GuitarApp {
       this.compressor.attack.setValueAtTime(0.002, this.audioCtx.currentTime);
       this.compressor.release.setValueAtTime(0.12, this.audioCtx.currentTime);
 
-      // 2. マスターゲイン（最大2.0倍対応）
+      // 2. マスターゲイン（最大4.0倍対応）
       this.masterGain = this.audioCtx.createGain();
       this.masterGain.gain.setValueAtTime(this.volume, this.audioCtx.currentTime);
 
@@ -327,7 +327,7 @@ class GuitarApp {
       }
     } else {
       if (document.exitFullscreen) {
-        document.exitFullscreen().catch(() => {});
+        document.exitFullscreen().catch(() => { });
       } else if (document.webkitExitFullscreen) {
         document.webkitExitFullscreen();
       } else if (document.mozCancelFullScreen) {
