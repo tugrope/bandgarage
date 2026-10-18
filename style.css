@@ -71,45 +71,6 @@ html, body {
   box-sizing: border-box;
 }
 
-/* 端末が縦向き（Portrait）の場合、90度回転させて横向き固定
-   ブラウザのアドレスバー（上部）とツールバー（下部）の間の可視領域に完全に収める */
-@media screen and (orientation: portrait) {
-  .app-container {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    width: 100vh;
-    width: 100dvh;
-    width: 100svh;
-    height: 100vw;
-    height: 100dvw;
-    transform: translate(-50%, -50%) rotate(90deg);
-    transform-origin: center center;
-    /* 回転後の画面上下（アドレスバー側＝左、ツールバー側＝右）に安全余白を確保 */
-    padding-top: env(safe-area-inset-right);
-    padding-right: max(env(safe-area-inset-bottom), 8px);
-    padding-bottom: env(safe-area-inset-left);
-    padding-left: max(env(safe-area-inset-top), 8px);
-    box-sizing: border-box;
-  }
-
-  /* 縦画面持ち時: 1弦を画面上端に固定し、弦間を約75%にスリム化（横画面と同等のベストな弦間隔） */
-  .app-main {
-    align-items: flex-start;
-    padding-top: 2px;
-    padding-bottom: 2px;
-  }
-
-  .guitar-neck-wrapper {
-    align-items: flex-start;
-    height: 100%;
-  }
-
-  .fretboard {
-    height: 75% !important;
-    max-height: 255px !important;
-  }
-}
 
 /* ====================================================
    Main Guitar Fretboard Area (1弦側の上部はスッキリ解放)
@@ -518,3 +479,50 @@ body.theme-maple .note-badge {
   font-size: 0.9rem;
   color: var(--accent-color);
 }
+
+/* ====================================================
+   端末が縦向き（Portrait）の場合のスタイル
+   90度回転させて横向きギターをキープし、
+   1弦側（画面右端）をディスプレイ隅に完全密着
+   ==================================================== */
+@media screen and (orientation: portrait) {
+  .app-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 100vh;
+    width: 100dvh;
+    width: 100svh;
+    height: 100vw;
+    height: 100dvw;
+    transform: translate(-50%, -50%) rotate(90deg);
+    transform-origin: center center;
+    /* 1弦側（上端＝回転後の画面右端）の余白をゼロにしてディスプレイ隅に密着 */
+    padding-top: 0;
+    padding-right: max(env(safe-area-inset-bottom), 8px);
+    padding-bottom: env(safe-area-inset-left);
+    padding-left: max(env(safe-area-inset-top), 8px);
+    box-sizing: border-box;
+  }
+
+  /* 1弦側を上端（画面右隅）に密着配置 */
+  .app-main {
+    align-items: flex-start !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .guitar-neck-wrapper {
+    align-items: flex-start !important;
+    height: 100% !important;
+  }
+
+  .fretboard {
+    height: 75% !important;
+    max-height: 255px !important;
+    border-top: none !important;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+  }
+}
+
