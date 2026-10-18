@@ -1,6 +1,6 @@
 {
-  "name": "Fretboard 14",
-  "short_name": "Fretboard14",
+  "name": "FRET14",
+  "short_name": "FRET14",
   "description": "14フレット ギター指板アプリ",
   "start_url": "./index.html",
   "display": "fullscreen",
@@ -9,9 +9,16 @@
   "theme_color": "#0d0e12",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎸</text></svg>",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml"
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "favicon.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
