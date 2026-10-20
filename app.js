@@ -43,6 +43,7 @@ class GuitarApp {
     this.appContainer = document.getElementById('appContainer');
     this.fretboardEl = document.getElementById('fretboard');
     this.themeSelect = document.getElementById('fretboardTheme');
+    this.neckDirectionSelect = document.getElementById('neckDirection');
     this.noteDisplaySelect = document.getElementById('noteDisplay');
     this.volumeSlider = document.getElementById('masterVolume');
     this.volIcon = document.getElementById('volIcon');
@@ -415,6 +416,17 @@ class GuitarApp {
     this.themeSelect.addEventListener('change', (e) => {
       document.body.className = e.target.value;
     });
+
+    // ネック向き切り替え（横左 / 横右）
+    if (this.neckDirectionSelect) {
+      this.neckDirectionSelect.addEventListener('change', (e) => {
+        if (e.target.value === 'right') {
+          this.appContainer.classList.add('neck-right');
+        } else {
+          this.appContainer.classList.remove('neck-right');
+        }
+      });
+    }
 
     // 音名表示切り替え（音名 / 階名 / なし）
     this.noteDisplaySelect.addEventListener('change', (e) => {
