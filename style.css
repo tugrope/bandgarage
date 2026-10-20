@@ -150,6 +150,34 @@ html, body {
   pointer-events: none;
 }
 
+/* ====================================================
+   横右表示（ネック向き反転: 1弦が下、6弦が上、0Fが右、14Fが左）
+   ==================================================== */
+.neck-right .fretboard {
+  flex-direction: row-reverse;
+  border-top: 5px solid rgba(0, 0, 0, 0.75);
+  border-bottom: 3px solid rgba(255, 255, 255, 0.22);
+}
+
+.neck-right .fret-column {
+  flex-direction: column-reverse;
+}
+
+/* ナット（0フレット / 開放弦エリア）: 右端に配置され、左側にナット境界線 */
+.neck-right .fret-column[data-fret="0"] {
+  background: linear-gradient(to left, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.1) 70%, var(--nut-color) 85%, #baa996 100%);
+  border-right: none;
+  border-left: 4px solid #6b5c4d;
+  box-shadow: -2px 0 6px rgba(0,0,0,0.6);
+}
+
+/* フレットワイヤー（1〜14フレット）: 各フレットの左端に配置 */
+.neck-right .fret-column:not([data-fret="0"])::after {
+  right: auto;
+  left: 0;
+  box-shadow: -1px 0 3px rgba(0, 0, 0, 0.7), 1px 0 2px rgba(255, 255, 255, 0.3);
+}
+
 /* フレット番号（指板下部に薄く刻印） */
 .fret-number {
   position: absolute;

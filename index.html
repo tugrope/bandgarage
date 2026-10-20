@@ -16,7 +16,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#121316">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=20261020_2">
+  <link rel="stylesheet" href="style.css?v=20261020_3">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -44,12 +44,18 @@
         <span id="currentNoteText" class="current-note">-</span>
       </div>
 
-      <!-- コントロール群（指板材・音名・音量・全画面） -->
+      <!-- コントロール群（指板材・ネック向き・音名・音量・全画面） -->
       <div class="footer-controls">
         <!-- 指板材セレクト（Maple / Rose） -->
         <select id="fretboardTheme" class="select-ui" title="指板材">
           <option value="theme-maple" selected>Maple</option>
           <option value="theme-rosewood">Rose</option>
+        </select>
+
+        <!-- ネック向きセレクト（横左 / 横右） -->
+        <select id="neckDirection" class="select-ui" title="ネック向き">
+          <option value="left" selected>横左</option>
+          <option value="right">横右</option>
         </select>
 
         <!-- 音名表示セレクト（なし / 全音名 / 白音名 / 全音階 / 白音階） -->
@@ -78,7 +84,7 @@
     Safariの共有アイコン <span class="share-icon">⎋</span> から「ホーム画面に追加」するとアドレスバーのない完全フル画面でお使いいただけます
   </div>
 
-  <script src="app.js?v=20261020_2"></script>
+  <script src="app.js?v=20261020_3"></script>
 </body>
 
 </html>
