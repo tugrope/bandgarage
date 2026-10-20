@@ -30,7 +30,7 @@ class GuitarApp {
     this.masterGain = null;
     this.compressor = null;
     this.activePointers = new Map(); // pointerId -> activeCell
-    this.noteDisplayMode = 'english'; // 'english' | 'solfege' | 'none'
+    this.noteDisplayMode = 'all-english'; // 'none' | 'all-english' | 'natural-english' | 'all-solfege' | 'natural-solfege'
     this.volume = 1.4; // 初期値（従来の約1.75倍、最大4.0倍）
 
     this.initDOM();
@@ -88,10 +88,13 @@ class GuitarApp {
   getNoteInfo(midi) {
     const noteIndex = midi % 12;
     const octave = Math.floor(midi / 12) - 1;
+    // 白鍵（ナチュラル音）判定: C, D, E, F, G, A, B (黒鍵: 1, 3, 6, 8, 10)
+    const isNatural = ![1, 3, 6, 8, 10].includes(noteIndex);
     return {
       en: `${NOTE_NAMES_EN[noteIndex]}${octave}`,
       enShort: NOTE_NAMES_EN[noteIndex],
       ja: NOTE_NAMES_JA[noteIndex],
+      isNatural,
       midi
     };
   }
@@ -249,7 +252,7 @@ class GuitarApp {
     this.updateNoteLabels();
   }
 
-  // 音名バッジの表示更新（音名 / 階名 / なし）
+  // 音名バッジの表示更新（なし / 全音名 / 白音名 / 全音階 / 白音階）
   updateNoteLabels() {
     const cells = this.fretboardEl.querySelectorAll('.fret-cell');
     cells.forEach((cell) => {
@@ -259,14 +262,36 @@ class GuitarApp {
 
       if (!badge) return;
 
-      if (this.noteDisplayMode === 'none') {
-        badge.style.display = 'none';
-      } else if (this.noteDisplayMode === 'solfege') {
-        badge.style.display = 'flex';
-        badge.textContent = noteInfo.ja;
-      } else {
-        badge.style.display = 'flex';
-        badge.textContent = noteInfo.enShort;
+      switch (this.noteDisplayMode) {
+        case 'none':
+          badge.style.display = 'none';
+          break;
+        case 'all-english':
+          badge.style.display = 'flex';
+          badge.textContent = noteInfo.enShort;
+          break;
+        case 'natural-english':
+          if (noteInfo.isNatural) {
+            badge.style.display = 'flex';
+            badge.textContent = noteInfo.enShort;
+          } else {
+            badge.style.display = 'none';
+          }
+          break;
+        case 'all-solfege':
+          badge.style.display = 'flex';
+          badge.textContent = noteInfo.ja;
+          break;
+        case 'natural-solfege':
+          if (noteInfo.isNatural) {
+            badge.style.display = 'flex';
+            badge.textContent = noteInfo.ja;
+          } else {
+            badge.style.display = 'none';
+          }
+          break;
+        default:
+          badge.style.display = 'none';
       }
     });
   }
