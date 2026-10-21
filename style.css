@@ -3,6 +3,7 @@
    Fender / Stratocaster Style with Full 14 Frets
    ==================================================== */
 
+/* 指板・フレット共通変数 */
 :root {
   --bg-color: #0d0e12;
   --panel-bg: #16181f;
@@ -13,6 +14,8 @@
   --fret-wire-color: linear-gradient(to right, #71757d 0%, #ffffff 30%, #a4abb5 70%, #4b4f56 100%);
   --nut-color: #e5ded3;
   --inlay-color: radial-gradient(circle, #f5f4ef 0%, #d8d4c9 70%, #999488 100%);
+  /* 1弦下・6弦上の空きスペース（指板内部の余白）の調整オフセット: 従来の7px突き出しから2.5pxに縮小し、端弦と指板エッジの空きを約25%拡大 */
+  --edge-string-offset: 2.5px;
 }
 
 /* メイプル指板テーマ */
@@ -112,20 +115,20 @@ html, body {
   border-bottom: 5px solid rgba(0, 0, 0, 0.75);
 }
 
-/* 各フレット列 (0〜14) - 1弦と6弦の外側余白を音名が見えるギリギリまでスリム化 */
+/* 各フレット列 (0〜14) - 1弦と6弦の外側余白を約25%ゆとりをもたせて配置 */
 .fret-column {
   position: relative;
   display: flex;
   flex-direction: column;
-  height: calc(100% + 14px);
-  margin-top: -7px;
-  margin-bottom: -7px;
+  height: calc(100% + (var(--edge-string-offset) * 2));
+  margin-top: calc(-1 * var(--edge-string-offset));
+  margin-bottom: calc(-1 * var(--edge-string-offset));
   z-index: 2;
 }
 
-/* ナット（0フレット / 開放弦エリア: 従来の半分に縮小） */
+/* ナット（0フレット / 開放弦エリア: 従来の幅から約25%拡大） */
 .fret-column[data-fret="0"] {
-  flex: 0 0 clamp(20px, 3.2vh, 26px);
+  flex: 0 0 clamp(25px, 4.0vh, 33px);
   background: linear-gradient(to right, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.1) 70%, var(--nut-color) 85%, #baa996 100%);
   border-right: 4px solid #6b5c4d;
   box-shadow: 2px 0 6px rgba(0,0,0,0.6);
@@ -181,7 +184,7 @@ html, body {
 /* フレット番号（指板下部に薄く刻印） */
 .fret-number {
   position: absolute;
-  bottom: 9px;
+  bottom: 6px;
   width: 100%;
   text-align: center;
   font-size: 0.75rem;
@@ -193,7 +196,7 @@ html, body {
 }
 
 .fret-column[data-fret="0"] .fret-number {
-  bottom: 9px;
+  bottom: 6px;
   font-size: 0.65rem;
   opacity: 0.9;
   color: #3d2b1f;
@@ -553,4 +556,25 @@ body.theme-maple .note-badge {
     border-top-right-radius: 0 !important;
   }
 }
+
+/* ====================================================
+   スマホの横置き画面（Landscape）専用スタイル
+   音名表示・各種設定バー（app-footer）をブラウザ上方（アドレスバー直下）に配置
+   ※スマホ縦置き（Portrait）およびPC・タブレットには一切影響しません
+   ==================================================== */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  .app-container {
+    flex-direction: column-reverse;
+  }
+
+  .app-footer {
+    border-top: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .ios-fullscreen-hint {
+    bottom: 16px;
+  }
+}
+
 
