@@ -31,6 +31,7 @@ class GuitarApp {
     this.compressor = null;
     this.activePointers = new Map(); // pointerId -> activeCell
     this.noteDisplayMode = 'all-english'; // 'none' | 'all-english' | 'natural-english' | 'all-solfege' | 'natural-solfege'
+    this.popupMode = 'on'; // 'on' | 'off' (押弦ポップアップ制御)
     this.volume = 1.4; // 初期値（従来の約1.75倍、最大4.0倍）
 
     this.initDOM();
@@ -45,6 +46,7 @@ class GuitarApp {
     this.themeSelect = document.getElementById('fretboardTheme');
     this.neckDirectionSelect = document.getElementById('neckDirection');
     this.noteDisplaySelect = document.getElementById('noteDisplay');
+    this.popupSelect = document.getElementById('popupDisplay');
     this.volumeSlider = document.getElementById('masterVolume');
     this.volIcon = document.getElementById('volIcon');
     this.fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -244,6 +246,11 @@ class GuitarApp {
         badge.className = 'note-badge';
         cell.appendChild(badge);
 
+        // 押弦時フローティングポップアップ
+        const popup = document.createElement('div');
+        popup.className = 'note-popup';
+        cell.appendChild(popup);
+
         col.appendChild(cell);
       });
 
@@ -323,12 +330,42 @@ class GuitarApp {
     if (this.currentNoteText) {
       this.currentNoteText.textContent = `${stringIndex}弦 ${fret === 0 ? '開放' : fret + 'F'} : ${noteFull} (${noteJa})`;
     }
+
+    // 押弦ポップアップ吹き出しの更新・表示（PU: 有/無 制御）
+    const popup = cell.querySelector('.note-popup');
+    if (popup) {
+      if (this.popupMode === 'on') {
+        // 音名/音階の決定（階名モード時は日本語階名、それ以外は英語短縮音名）
+        const isSolfege = this.noteDisplayMode === 'all-solfege' || this.noteDisplayMode === 'natural-solfege';
+        popup.textContent = isSolfege ? noteInfo.ja : noteInfo.enShort;
+
+        // 最上段の弦（通常時は1弦、ネック右反転時は6弦）は下向きにポップアップして見切れ防止
+        const isNeckRight = this.neckDirectionSelect && this.neckDirectionSelect.value === 'right';
+        const isTopString = isNeckRight ? stringIndex === 6 : stringIndex === 1;
+        if (isTopString) {
+          popup.classList.add('popup-down');
+        } else {
+          popup.classList.remove('popup-down');
+        }
+
+        popup.classList.add('show');
+      } else {
+        popup.classList.remove('show');
+      }
+    }
   }
 
   // セルの離弦処理
   deactivateCell(cell) {
     if (!cell) return;
     cell.classList.remove('active');
+
+    // ポップアップの非表示
+    const popup = cell.querySelector('.note-popup');
+    if (popup) {
+      popup.classList.remove('show');
+    }
+
     setTimeout(() => {
       cell.classList.remove('vibrating');
     }, 400);
@@ -433,6 +470,17 @@ class GuitarApp {
       this.noteDisplayMode = e.target.value;
       this.updateNoteLabels();
     });
+
+    // ポップアップ切り替え（PU: 有 / PU: 無）
+    if (this.popupSelect) {
+      this.popupSelect.addEventListener('change', (e) => {
+        this.popupMode = e.target.value;
+        if (this.popupMode === 'off') {
+          const activePopups = this.fretboardEl.querySelectorAll('.note-popup.show');
+          activePopups.forEach((p) => p.classList.remove('show'));
+        }
+      });
+    }
 
     // ボリューム変更（最大2.0倍）
     this.volumeSlider.addEventListener('input', (e) => {
