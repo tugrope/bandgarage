@@ -16,7 +16,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#121316">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=20261021_1">
+  <link rel="stylesheet" href="style.css?v=20261026_1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -67,6 +67,12 @@
           <option value="natural-solfege">白音階</option>
         </select>
 
+        <!-- ポップアップセレクト（PU: 有 / PU: 無） -->
+        <select id="popupDisplay" class="select-ui" title="押弦ポップアップ">
+          <option value="on" selected>PU: 有</option>
+          <option value="off">PU: 無</option>
+        </select>
+
         <!-- ボリュームスライダー（最大400%ブースト対応） -->
         <div class="volume-group" title="音量設定 (最大4倍)">
           <span class="vol-icon" id="volIcon">🔊</span>
@@ -84,7 +90,7 @@
     Safariの共有アイコン <span class="share-icon">⎋</span> から「ホーム画面に追加」するとアドレスバーのない完全フル画面でお使いいただけます
   </div>
 
-  <script src="app.js?v=20261021_1"></script>
+  <script src="app.js?v=20261026_1"></script>
 </body>
 
 </html>

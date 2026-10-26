@@ -37,6 +37,9 @@ body.theme-rosewood {
   margin: 0;
   padding: 0;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 html, body {
@@ -50,6 +53,7 @@ html, body {
   color: var(--text-main);
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
   touch-action: none;
   position: fixed;
   top: 0;
@@ -358,6 +362,61 @@ body.theme-maple .note-badge {
 .fret-cell.active .press-marker {
   transform: scale(1);
   opacity: 1;
+}
+
+/* 押弦時の音名/音階拡大ポップアップ（指に隠れない吹き出しバブル） */
+.note-popup {
+  position: absolute;
+  top: -26px; /* 通常: 指の少し上（指板内側）へポップアップ */
+  left: 50%;
+  transform: translateX(-50%) scale(0.4);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 50;
+  background: rgba(18, 20, 26, 0.95);
+  color: var(--accent-color);
+  border: 1.5px solid var(--accent-color);
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8), 0 0 10px var(--accent-glow);
+  white-space: nowrap;
+  transition: transform 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 吹き出しの三角形の矢印（下向き） */
+.note-popup::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px;
+  border-style: solid;
+  border-color: var(--accent-color) transparent transparent transparent;
+}
+
+/* 最上段弦（通常時:1弦、ネック右反転時:6弦）用: 下向きにポップアップ */
+.note-popup.popup-down {
+  top: auto;
+  bottom: -26px;
+}
+
+.note-popup.popup-down::after {
+  top: auto;
+  bottom: 100%;
+  border-color: transparent transparent var(--accent-color) transparent;
+}
+
+/* ポップアップ表示状態 */
+.note-popup.show {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
 }
 
 /* 弦の振動アニメーション */
