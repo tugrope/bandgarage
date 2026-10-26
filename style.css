@@ -314,6 +314,23 @@ body.theme-maple .note-badge {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+/* 度数表示におけるルート音（R）の専用ハイライトスタイル */
+.note-badge.badge-root {
+  background: rgba(46, 213, 115, 0.35);
+  border-color: rgba(46, 213, 115, 0.95);
+  color: #2ed573;
+  font-weight: 700;
+  box-shadow: 0 0 8px rgba(46, 213, 115, 0.4);
+}
+
+body.theme-maple .note-badge.badge-root {
+  background: rgba(26, 92, 45, 0.75);
+  border-color: #2ed573;
+  color: #abffcb;
+  font-weight: 700;
+  box-shadow: 0 0 8px rgba(46, 213, 115, 0.45);
+}
+
 /* 0フレット（開放弦）専用の音名バッジ調整: ナット線に乗っても見やすく表示 */
 .fret-column[data-fret="0"] .note-badge {
   font-size: 0.69rem;
@@ -445,14 +462,15 @@ body.theme-maple .note-badge {
   padding: 0 12px;
   z-index: 20;
   flex-shrink: 0;
-  gap: 10px;
+  gap: 8px;
 }
 
 /* 演奏中ノート表示（ラベルなし・緑文字イキ） */
 .played-note-box {
   display: flex;
   align-items: center;
-  min-width: 140px;
+  min-width: 120px;
+  flex-shrink: 0;
 }
 
 .current-note {
@@ -467,7 +485,8 @@ body.theme-maple .note-badge {
 .footer-controls {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 /* セレクトUI（Maple/Rose, 音名/階名/なし の短文コンパクト仕様） */
@@ -475,9 +494,9 @@ body.theme-maple .note-badge {
   background: #242731;
   color: var(--text-main);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  padding: 4px 6px;
+  padding: 4px 5px;
   border-radius: 6px;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 500;
   cursor: pointer;
   outline: none;
@@ -488,24 +507,24 @@ body.theme-maple .note-badge {
   border-color: var(--accent-color);
 }
 
-/* ボリュームグループ */
+/* ボリュームグループ（キーセレクト追加に伴い幅をスマートに最適化） */
 .volume-group {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   background: rgba(255, 255, 255, 0.04);
-  padding: 3px 8px;
+  padding: 3px 6px;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .vol-icon {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   user-select: none;
 }
 
 .vol-slider {
-  width: 130px;
+  width: 80px;
   height: 4px;
   accent-color: var(--accent-color);
   cursor: pointer;

@@ -20,6 +20,58 @@ const NOTE_NAMES_JA = ['ド', 'レ♭', 'レ', 'ミ♭', 'ミ', 'ファ', 'ソ�
 // 14フレット（0: 開放弦 〜 14フレット）
 const TOTAL_FRETS = 14;
 
+// 24キー設定（メジャー12 / マイナー12）
+// ルート音番号: C=0, C#/Db=1, D=2, D#/Eb=3, E=4, F=5, F#/Gb=6, G=7, G#/Ab=8, A=9, A#/Bb=10, B=11
+const KEYS_CONFIG = {
+  'C-major': { root: 0, type: 'major', name: 'C' },
+  'Db-major': { root: 1, type: 'major', name: 'D♭' },
+  'D-major': { root: 2, type: 'major', name: 'D' },
+  'Eb-major': { root: 3, type: 'major', name: 'E♭' },
+  'E-major': { root: 4, type: 'major', name: 'E' },
+  'F-major': { root: 5, type: 'major', name: 'F' },
+  'F#-major': { root: 6, type: 'major', name: 'F♯' },
+  'G-major': { root: 7, type: 'major', name: 'G' },
+  'G#-major': { root: 8, type: 'major', name: 'G♯' },
+  'A-major': { root: 9, type: 'major', name: 'A' },
+  'Bb-major': { root: 10, type: 'major', name: 'B♭' },
+  'B-major': { root: 11, type: 'major', name: 'B' },
+
+  'C-minor': { root: 0, type: 'minor', name: 'Cm' },
+  'Db-minor': { root: 1, type: 'minor', name: 'D♭m' },
+  'D-minor': { root: 2, type: 'minor', name: 'Dm' },
+  'Eb-minor': { root: 3, type: 'minor', name: 'E♭m' },
+  'E-minor': { root: 4, type: 'minor', name: 'Em' },
+  'F-minor': { root: 5, type: 'minor', name: 'Fm' },
+  'F#-minor': { root: 6, type: 'minor', name: 'F♯m' },
+  'G-minor': { root: 7, type: 'minor', name: 'Gm' },
+  'G#-minor': { root: 8, type: 'minor', name: 'G♯m' },
+  'A-minor': { root: 9, type: 'minor', name: 'Am' },
+  'Bb-minor': { root: 10, type: 'minor', name: 'B♭m' },
+  'B-minor': { root: 11, type: 'minor', name: 'Bm' },
+};
+
+// メジャーキースケール構成音（アイオニアン）度数表記: R/9/3/11/5/13/7（半音オフセット 0〜11）
+const MAJOR_DEGREE_MAP = {
+  0: 'R',
+  2: '9',
+  4: '3',
+  5: '11',
+  7: '5',
+  9: '13',
+  11: '7',
+};
+
+// ナチュラルマイナースケール構成音（エオリアン）度数表記: R/9/♭3/11/5/♭13/♭7（半音オフセット 0〜11）
+const MINOR_DEGREE_MAP = {
+  0: 'R',
+  2: '9',
+  3: '♭3',
+  5: '11',
+  7: '5',
+  8: '♭13',
+  10: '♭7',
+};
+
 // ドットインレイ位置
 const SINGLE_INLAY_FRETS = [3, 5, 7, 9];
 const DOUBLE_INLAY_FRETS = [12];
@@ -30,7 +82,8 @@ class GuitarApp {
     this.masterGain = null;
     this.compressor = null;
     this.activePointers = new Map(); // pointerId -> activeCell
-    this.noteDisplayMode = 'all-english'; // 'none' | 'all-english' | 'natural-english' | 'all-solfege' | 'natural-solfege'
+    this.noteDisplayMode = 'all-english'; // 'none' | 'all-english' | 'natural-english' | 'all-solfege' | 'natural-solfege' | 'degree'
+    this.currentKey = 'C-major'; // 選択中のキー
     this.popupMode = 'on'; // 'on' | 'off' (押弦ポップアップ制御)
     this.volume = 1.4; // 初期値（従来の約1.75倍、最大4.0倍）
 
@@ -46,6 +99,7 @@ class GuitarApp {
     this.themeSelect = document.getElementById('fretboardTheme');
     this.neckDirectionSelect = document.getElementById('neckDirection');
     this.noteDisplaySelect = document.getElementById('noteDisplay');
+    this.keySelect = document.getElementById('keySelect');
     this.popupSelect = document.getElementById('popupDisplay');
     this.volumeSlider = document.getElementById('masterVolume');
     this.volIcon = document.getElementById('volIcon');
@@ -99,6 +153,25 @@ class GuitarApp {
       ja: NOTE_NAMES_JA[noteIndex],
       isNatural,
       midi
+    };
+  }
+
+  // 現在の選択キーにおける度数情報を取得（スケール外の場合はdegree: null）
+  getDegreeInfo(midi) {
+    const keyConfig = KEYS_CONFIG[this.currentKey];
+    if (!keyConfig) return null;
+
+    const noteIndex = midi % 12;
+    const interval = (noteIndex - keyConfig.root + 12) % 12;
+    const degreeMap = keyConfig.type === 'major' ? MAJOR_DEGREE_MAP : MINOR_DEGREE_MAP;
+    const degree = degreeMap[interval] || null;
+
+    return {
+      degree,
+      isRoot: degree === 'R',
+      inScale: degree !== null,
+      interval,
+      keyName: keyConfig.name
     };
   }
 
@@ -260,7 +333,7 @@ class GuitarApp {
     this.updateNoteLabels();
   }
 
-  // 音名バッジの表示更新（なし / 全音名 / 白音名 / 全音階 / 白音階）
+  // 音名バッジの表示更新（なし / 全音名 / 白音名 / 全音階 / 白音階 / 度数）
   updateNoteLabels() {
     const cells = this.fretboardEl.querySelectorAll('.fret-cell');
     cells.forEach((cell) => {
@@ -269,6 +342,8 @@ class GuitarApp {
       const badge = cell.querySelector('.note-badge');
 
       if (!badge) return;
+
+      badge.classList.remove('badge-root');
 
       switch (this.noteDisplayMode) {
         case 'none':
@@ -298,6 +373,19 @@ class GuitarApp {
             badge.style.display = 'none';
           }
           break;
+        case 'degree': {
+          const degInfo = this.getDegreeInfo(midi);
+          if (degInfo && degInfo.inScale) {
+            badge.style.display = 'flex';
+            badge.textContent = degInfo.degree;
+            if (degInfo.isRoot) {
+              badge.classList.add('badge-root');
+            }
+          } else {
+            badge.style.display = 'none';
+          }
+          break;
+        }
         default:
           badge.style.display = 'none';
       }
@@ -321,23 +409,38 @@ class GuitarApp {
     const noteInfo = this.getNoteInfo(midi);
     const noteFull = noteInfo.en;
     const noteJa = noteInfo.ja;
+    const degInfo = this.getDegreeInfo(midi);
 
     const marker = cell.querySelector('.press-marker');
     if (marker) {
-      marker.setAttribute('data-active-note', noteInfo.enShort);
+      if (this.noteDisplayMode === 'degree') {
+        marker.setAttribute('data-active-note', degInfo && degInfo.degree ? degInfo.degree : noteInfo.enShort);
+      } else {
+        marker.setAttribute('data-active-note', noteInfo.enShort);
+      }
     }
 
     if (this.currentNoteText) {
-      this.currentNoteText.textContent = `${stringIndex}弦 ${fret === 0 ? '開放' : fret + 'F'} : ${noteFull} (${noteJa})`;
+      if (this.noteDisplayMode === 'degree') {
+        const degText = degInfo && degInfo.degree ? ` [${degInfo.degree}]` : ' [スケール外]';
+        this.currentNoteText.textContent = `${stringIndex}弦 ${fret === 0 ? '開放' : fret + 'F'} : ${noteFull}${degText}`;
+      } else {
+        this.currentNoteText.textContent = `${stringIndex}弦 ${fret === 0 ? '開放' : fret + 'F'} : ${noteFull} (${noteJa})`;
+      }
     }
 
     // 押弦ポップアップ吹き出しの更新・表示（PU: 有/無 制御）
     const popup = cell.querySelector('.note-popup');
     if (popup) {
       if (this.popupMode === 'on') {
-        // 音名/音階の決定（階名モード時は日本語階名、それ以外は英語短縮音名）
-        const isSolfege = this.noteDisplayMode === 'all-solfege' || this.noteDisplayMode === 'natural-solfege';
-        popup.textContent = isSolfege ? noteInfo.ja : noteInfo.enShort;
+        // 音名/音階/度数の決定
+        if (this.noteDisplayMode === 'all-solfege' || this.noteDisplayMode === 'natural-solfege') {
+          popup.textContent = noteInfo.ja;
+        } else if (this.noteDisplayMode === 'degree') {
+          popup.textContent = degInfo && degInfo.degree ? degInfo.degree : noteInfo.enShort;
+        } else {
+          popup.textContent = noteInfo.enShort;
+        }
 
         // 最上段の弦（通常時は1弦、ネック右反転時は6弦）は下向きにポップアップして見切れ防止
         const isNeckRight = this.neckDirectionSelect && this.neckDirectionSelect.value === 'right';
@@ -465,11 +568,21 @@ class GuitarApp {
       });
     }
 
-    // 音名表示切り替え（音名 / 階名 / なし）
+    // 音名表示切り替え（音名 / 階名 / なし / 度数）
     this.noteDisplaySelect.addEventListener('change', (e) => {
       this.noteDisplayMode = e.target.value;
       this.updateNoteLabels();
     });
+
+    // キー切り替え（24キー）
+    if (this.keySelect) {
+      this.keySelect.addEventListener('change', (e) => {
+        this.currentKey = e.target.value;
+        if (this.noteDisplayMode === 'degree') {
+          this.updateNoteLabels();
+        }
+      });
+    }
 
     // ポップアップ切り替え（PU: 有 / PU: 無）
     if (this.popupSelect) {
