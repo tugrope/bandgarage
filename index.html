@@ -16,7 +16,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#121316">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=20261026_1">
+  <link rel="stylesheet" href="style.css?v=20261027_1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -58,13 +58,46 @@
           <option value="right">横右</option>
         </select>
 
-        <!-- 音名表示セレクト（なし / 全音名 / 白音名 / 全音階 / 白音階） -->
+        <!-- 音名表示セレクト（なし / 全音名 / 白音名 / 全音階 / 白音階 / 度数） -->
         <select id="noteDisplay" class="select-ui" title="音名表示">
           <option value="none">なし</option>
           <option value="all-english" selected>全音名</option>
           <option value="natural-english">白音名</option>
           <option value="all-solfege">全音階</option>
           <option value="natural-solfege">白音階</option>
+          <option value="degree">度数</option>
+        </select>
+
+        <!-- キー選択セレクト（24キー: メジャー12 / マイナー12） -->
+        <select id="keySelect" class="select-ui" title="キー選択">
+          <optgroup label="メジャー">
+            <option value="C-major" selected>C</option>
+            <option value="Db-major">D♭</option>
+            <option value="D-major">D</option>
+            <option value="Eb-major">E♭</option>
+            <option value="E-major">E</option>
+            <option value="F-major">F</option>
+            <option value="F#-major">F♯</option>
+            <option value="G-major">G</option>
+            <option value="G#-major">G♯</option>
+            <option value="A-major">A</option>
+            <option value="Bb-major">B♭</option>
+            <option value="B-major">B</option>
+          </optgroup>
+          <optgroup label="マイナー">
+            <option value="C-minor">Cm</option>
+            <option value="Db-minor">D♭m</option>
+            <option value="D-minor">Dm</option>
+            <option value="Eb-minor">E♭m</option>
+            <option value="E-minor">Em</option>
+            <option value="F-minor">Fm</option>
+            <option value="F#-minor">F♯m</option>
+            <option value="G-minor">Gm</option>
+            <option value="G#-minor">G♯m</option>
+            <option value="A-minor">Am</option>
+            <option value="Bb-minor">B♭m</option>
+            <option value="B-minor">Bm</option>
+          </optgroup>
         </select>
 
         <!-- ポップアップセレクト（PU: 有 / PU: 無） -->
@@ -90,7 +123,7 @@
     Safariの共有アイコン <span class="share-icon">⎋</span> から「ホーム画面に追加」するとアドレスバーのない完全フル画面でお使いいただけます
   </div>
 
-  <script src="app.js?v=20261026_1"></script>
+  <script src="app.js?v=20261027_1"></script>
 </body>
 
 </html>
